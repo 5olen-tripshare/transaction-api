@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Installer les dépendances
-RUN npm install
+RUN npm install --only=production
 
 # Copier le reste des fichiers dans le conteneur
 COPY . .
@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 5006
 
 # Définir la commande de lancement du serveur
-CMD ["npm", "run", "dev"]
+CMD ["node", "index.js"]
