@@ -1,6 +1,8 @@
 const express = require("express");
 const path = require("path");
 const verifyJWT = require("../middlewares/auth.middleware");
+const multer = require("multer");
+const upload = multer();
 const app = express();
 
 const {
@@ -8,14 +10,28 @@ const {
   createTransaction,
   deleteTransaction,
   getAllTransactionsByUser,
+  countTransactionsByAccommodation,
 } = require("../services/transaction.service");
 
 const router = express.Router();
 
-router.post("/", verifyJWT, async (req, res) => {
+router.post("/", upload.none(), verifyJWT, async (req, res) => {
   try {
-    const newTransaction = await createTransaction(req.body);
-    res.status(201).json(newTransaction);
+    const userIdFromToken = req.user.sub;
+    const { totalPrice, startDate, endDate, accommodationId } = req.body;
+
+    const newTransaction = {
+      userId: userIdFromToken,
+      totalPrice: totalPrice,
+      startDate: startDate,
+      endDate: endDate,
+      accommodationId: accommodationId,
+    };
+
+    console.log(newTransaction);
+
+    const transaction = await createTransaction(newTransaction);
+    res.status(201).json(transaction);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -23,9 +39,7 @@ router.post("/", verifyJWT, async (req, res) => {
 
 router.get("/accommodation/:id", verifyJWT, async (req, res) => {
   try {
-    const transactions = await getAllTransactionsByAccommodation(
-      req.params.accommodationId
-    );
+    const transactions = await getAllTransactionsByAccommodation(req.params.id);
     res.json(transactions);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -34,7 +48,9 @@ router.get("/accommodation/:id", verifyJWT, async (req, res) => {
 
 router.get("/user/:id", verifyJWT, async (req, res) => {
   try {
-    const transactions = await getAllTransactionsByUser(req.params.userId);
+    const userIdFromToken = req.user.sub;
+
+    const transactions = await getAllTransactionsByUser(userIdFromToken);
     res.json(transactions);
   } catch (error) {
     res.status(500).json({ message: error.message });
